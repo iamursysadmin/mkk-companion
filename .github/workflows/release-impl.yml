@@ -1,0 +1,186 @@
+name: Release Implementation
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: Release channel (beta | stable)
+        required: true
+        type: string
+      bump:
+        description: Semver bump type
+        required: true
+        type: string
+      version:
+        description: Explicit version (overrides bump when set)
+        required: false
+        type: string
+        default: ''
+    outputs:
+      tag:
+        description: Created git tag (e.g. v1.0.0 or v1.0.0-beta.1)
+        value: ${{ jobs.release.outputs.tag }}
+      version:
+        description: Released package version
+        value: ${{ jobs.release.outputs.version }}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Changelog, Tag & GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Validate Inputs
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          BUMP: ${{ inputs.bump }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          if [ "$CHANNEL" != "beta" ] && [ "$CHANNEL" != "stable" ]; then
+            echo "Invalid channel: $CHANNEL (expected beta|stable)"
+            exit 1
+          fi
+
+          if [ -n "$VERSION" ]; then
+            if [ "$CHANNEL" = "beta" ]; then
+              if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]; then
+                echo "Beta version must match SemVer prerelease form X.Y.Z-beta.N (got: $VERSION)"
+                exit 1
+              fi
+            else
+              if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                echo "Stable version must match SemVer X.Y.Z with no prerelease (got: $VERSION)"
+                exit 1
+              fi
+            fi
+            exit 0
+          fi
+
+          if [ "$CHANNEL" = "beta" ]; then
+            case "$BUMP" in
+              prerelease|prepatch|preminor|premajor) ;;
+              *)
+                echo "Beta bump must be prerelease|prepatch|preminor|premajor (got: $BUMP)"
+                exit 1
+                ;;
+            esac
+          else
+            case "$BUMP" in
+              patch|minor|major) ;;
+              *)
+                echo "Stable bump must be patch|minor|major (got: $BUMP)"
+                exit 1
+                ;;
+            esac
+          fi
+
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump Version, Changelog, Commit, Tag & GitHub Release
+        env:
+          HUSKY: '0'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANNEL: ${{ inputs.channel }}
+          BUMP: ${{ inputs.bump }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          ARGS=(--release --clean --push)
+
+          if [ -n "$VERSION" ]; then
+            ARGS+=(-r "$VERSION")
+          elif [ "$CHANNEL" = "beta" ]; then
+            # SemVer prerelease with preid "beta"
+            # https://semver.org/#spec-item-9
+            case "$BUMP" in
+              prerelease) ARGS+=(--prerelease=beta) ;;
+              prepatch) ARGS+=(--prepatch=beta) ;;
+              preminor) ARGS+=(--preminor=beta) ;;
+              premajor) ARGS+=(--premajor=beta) ;;
+            esac
+          else
+            case "$BUMP" in
+              patch) ARGS+=(--patch) ;;
+              minor) ARGS+=(--minor) ;;
+              major) ARGS+=(--major) ;;
+            esac
+          fi
+
+          pnpm exec changelogen "${ARGS[@]}"
+
+      - name: Resolve & Validate Release Version
+        id: version
+        env:
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v${VERSION}"
+
+          if [ "$CHANNEL" = "beta" ]; then
+            if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$ ]]; then
+              echo "Beta release must produce X.Y.Z-beta.N (got: $VERSION)"
+              exit 1
+            fi
+          else
+            if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Stable release must produce X.Y.Z with no prerelease (got: $VERSION)"
+              exit 1
+            fi
+          fi
+
+          echo "Validated $CHANNEL version $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Resolved tag: $TAG"
+
+      - name: Mark GitHub Release Channel
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANNEL: ${{ inputs.channel }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ "$CHANNEL" = "beta" ]; then
+            # Prereleases must not be GitHub "latest"
+            gh release edit "$TAG" --prerelease --latest=false
+          else
+            gh release edit "$TAG" --prerelease=false --latest
+          fi
+
+  build:
+    name: Build
+    needs: release
+    uses: ./.github/workflows/build.yml
+    with:
+      tag: ${{ needs.release.outputs.tag }}
+    secrets: inherit

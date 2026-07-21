@@ -1,0 +1,10 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`pages constants > matches the route name snapshot 1`] = `
+{
+  "chords": "chords",
+  "expansions": "expansions",
+  "index": "index",
+  "settings": "settings",
+}
+`;

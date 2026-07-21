@@ -1,0 +1,14 @@
+{
+  "name": "docs",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build"
+  },
+  "dependencies": {
+    "@nuxt/eslint": "1.16.0",
+    "better-sqlite3": "12.11.1",
+    "docus": "5.12.3",
+    "eslint": "10.7.0",
+    "nuxt": "4.4.8"
+  }
+}

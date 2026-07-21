@@ -1,0 +1,38 @@
+name: Release Stable
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: >
+          SemVer bump. From a beta (X.Y.Z-beta.N), "patch" graduates to X.Y.Z.
+          From a stable version, bumps patch/minor/major as usual.
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+      version:
+        description: Explicit SemVer stable (e.g. 1.0.0) — overrides bump when set
+        required: false
+        type: string
+
+# Prevent overlapping beta/stable releases
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Stable
+    uses: ./.github/workflows/release-impl.yml
+    with:
+      channel: stable
+      bump: ${{ inputs.bump }}
+      version: ${{ inputs.version }}
+    secrets: inherit

@@ -1,0 +1,16 @@
+{
+  "common": {
+    "greeting": "Hello"
+  },
+  "pages": {
+    "index": "Home",
+    "chords": "Chords",
+    "expansions": "Expansions",
+    "settings": "Settings"
+  },
+  "music": {
+    "key": "Key",
+    "scale": "Scale",
+    "chord": "Chord"
+  }
+}

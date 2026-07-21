@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+@utility bg-default-blur {
+  background-color: rgba(var(--ui-bg-default), 0.85);
+  backdrop-filter: blur(16px);
+}

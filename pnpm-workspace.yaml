@@ -1,0 +1,133 @@
+packages:
+  - '.'
+  - 'docs'
+
+# Supply-chain hardening (pnpm 11)
+strictDepBuilds: true
+minimumReleaseAge: 10080 # 7 days — most malware is yanked quickly
+minimumReleaseAgeStrict: true
+trustPolicy: no-downgrade
+# Known transitive pins that predate provenance (not takeovers; cannot bump).
+trustPolicyExclude:
+  - semver@5.7.2
+  - semver@6.3.1
+blockExoticSubdeps: true
+# Committed lockfile is reviewed (CI rejects drive-by lockfile PRs). Age/trust
+# checks still apply when resolving new packages outside the lockfile.
+trustLockfile: true
+
+# Only these packages may run lifecycle / build scripts
+allowBuilds:
+  '@parcel/watcher': true
+  better-sqlite3: true
+  electron: true
+  electron-winstaller: true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+  vue-demi: true
+
+# Reviewed exceptions to the 7-day release-age gate (pin to exact versions)
+minimumReleaseAgeExclude:
+  - npm-check-updates@22.2.3
+  - '@intlify/core-base@11.4.7'
+  - '@intlify/devtools-types@11.4.7'
+  - '@intlify/message-compiler@11.4.7'
+  - '@intlify/shared@11.4.7'
+  - '@typescript-eslint/eslint-plugin@8.65.0'
+  - '@typescript-eslint/parser@8.65.0'
+  - '@typescript-eslint/project-service@8.65.0'
+  - '@typescript-eslint/scope-manager@8.65.0'
+  - '@typescript-eslint/tsconfig-utils@8.65.0'
+  - '@typescript-eslint/type-utils@8.65.0'
+  - '@typescript-eslint/types@8.65.0'
+  - '@typescript-eslint/typescript-estree@8.65.0'
+  - '@typescript-eslint/utils@8.65.0'
+  - '@typescript-eslint/visitor-keys@8.65.0'
+  - eslint-plugin-vue@10.10.0
+  - typescript-eslint@8.65.0
+  - vue-i18n@11.4.7
+  - '@iconify/collections@1.0.712'
+  - '@nuxt/kit@4.5.0'
+  - '@nuxt/schema@4.5.0'
+  - '@nuxt/ui@4.10.0'
+  - '@tailwindcss/node@4.3.3'
+  - '@tailwindcss/oxide-android-arm64@4.3.3'
+  - '@tailwindcss/oxide-darwin-arm64@4.3.3'
+  - '@tailwindcss/oxide-darwin-x64@4.3.3'
+  - '@tailwindcss/oxide-freebsd-x64@4.3.3'
+  - '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.3'
+  - '@tailwindcss/oxide-linux-arm64-gnu@4.3.3'
+  - '@tailwindcss/oxide-linux-arm64-musl@4.3.3'
+  - '@tailwindcss/oxide-linux-x64-gnu@4.3.3'
+  - '@tailwindcss/oxide-linux-x64-musl@4.3.3'
+  - '@tailwindcss/oxide-wasm32-wasi@4.3.3'
+  - '@tailwindcss/oxide-win32-arm64-msvc@4.3.3'
+  - '@tailwindcss/oxide-win32-x64-msvc@4.3.3'
+  - '@tailwindcss/oxide@4.3.3'
+  - '@tailwindcss/postcss@4.3.3'
+  - '@tailwindcss/vite@4.3.3'
+  - '@tiptap/core@3.28.0'
+  - '@tiptap/extension-blockquote@3.28.0'
+  - '@tiptap/extension-bold@3.28.0'
+  - '@tiptap/extension-bubble-menu@3.28.0'
+  - '@tiptap/extension-bullet-list@3.28.0'
+  - '@tiptap/extension-code-block@3.28.0'
+  - '@tiptap/extension-code@3.28.0'
+  - '@tiptap/extension-collaboration@3.28.0'
+  - '@tiptap/extension-document@3.28.0'
+  - '@tiptap/extension-drag-handle-vue-3@3.28.0'
+  - '@tiptap/extension-drag-handle@3.28.0'
+  - '@tiptap/extension-dropcursor@3.28.0'
+  - '@tiptap/extension-floating-menu@3.28.0'
+  - '@tiptap/extension-gapcursor@3.28.0'
+  - '@tiptap/extension-hard-break@3.28.0'
+  - '@tiptap/extension-heading@3.28.0'
+  - '@tiptap/extension-horizontal-rule@3.28.0'
+  - '@tiptap/extension-image@3.28.0'
+  - '@tiptap/extension-italic@3.28.0'
+  - '@tiptap/extension-link@3.28.0'
+  - '@tiptap/extension-list-item@3.28.0'
+  - '@tiptap/extension-list-keymap@3.28.0'
+  - '@tiptap/extension-list@3.28.0'
+  - '@tiptap/extension-mention@3.28.0'
+  - '@tiptap/extension-node-range@3.28.0'
+  - '@tiptap/extension-ordered-list@3.28.0'
+  - '@tiptap/extension-paragraph@3.28.0'
+  - '@tiptap/extension-placeholder@3.28.0'
+  - '@tiptap/extension-strike@3.28.0'
+  - '@tiptap/extension-text@3.28.0'
+  - '@tiptap/extension-underline@3.28.0'
+  - '@tiptap/extensions@3.28.0'
+  - '@tiptap/markdown@3.28.0'
+  - '@tiptap/pm@3.28.0'
+  - '@tiptap/starter-kit@3.28.0'
+  - '@tiptap/suggestion@3.28.0'
+  - '@tiptap/vue-3@3.28.0'
+  - '@tiptap/y-tiptap@3.0.7'
+  - '@unhead/vue@2.1.16'
+  - '@vitejs/plugin-vue@6.0.8'
+  - '@vue-macros/common@3.1.4'
+  - '@vue/compiler-core@3.5.40'
+  - '@vue/compiler-dom@3.5.40'
+  - '@vue/compiler-sfc@3.5.40'
+  - '@vue/compiler-ssr@3.5.40'
+  - '@vue/reactivity@3.5.40'
+  - '@vue/runtime-core@3.5.40'
+  - '@vue/runtime-dom@3.5.40'
+  - '@vue/server-renderer@3.5.40'
+  - '@vue/shared@3.5.40'
+  - electron@43.1.1
+  - fast-uri@3.1.4
+  - lint-staged@17.1.0
+  - nostics@1.2.0
+  - obug@2.1.4
+  - pinia@4.0.2
+  - postcss@8.5.20
+  - prettier-plugin-tailwindcss@0.8.1
+  - tailwindcss@4.3.3
+  - unctx@3.0.0
+  - unhead@2.1.16
+  - vite@8.1.5
+  - vue-router@5.2.0
+  - vue@3.5.40

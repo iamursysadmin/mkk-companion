@@ -1,0 +1,40 @@
+name: Release Beta
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: >
+          SemVer prerelease bump. Use "prerelease" to continue X.Y.Z-beta.N;
+          use prepatch/preminor/premajor to start a new beta line from the
+          next patch/minor/major.
+        required: true
+        type: choice
+        options:
+          - prerelease
+          - prepatch
+          - preminor
+          - premajor
+        default: prerelease
+      version:
+        description: Explicit SemVer beta (e.g. 1.0.0-beta.0) — overrides bump when set
+        required: false
+        type: string
+
+# Prevent overlapping beta/stable releases
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Beta
+    uses: ./.github/workflows/release-impl.yml
+    with:
+      channel: beta
+      bump: ${{ inputs.bump }}
+      version: ${{ inputs.version }}
+    secrets: inherit

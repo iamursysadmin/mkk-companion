@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "Vue.volar",
+    "Vue.vscode-typescript-vue-plugin",
+    "anysphere.remote-containers",
+    "ms-playwright.playwright"
+  ]
+}

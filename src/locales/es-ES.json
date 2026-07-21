@@ -1,0 +1,11 @@
+{
+  "common": {
+    "greeting": "Hola"
+  },
+  "pages": {
+    "index": "Inicio",
+    "chords": "Acordes",
+    "expansions": "Expansiones",
+    "settings": "Ajustes"
+  }
+}

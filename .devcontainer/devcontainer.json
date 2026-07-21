@@ -1,0 +1,56 @@
+{
+  "name": "MKK Companion",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "node",
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
+  "forwardPorts": [6080, 3344, 3000],
+  "portsAttributes": {
+    "6080": {
+      "label": "Desktop (noVNC)",
+      "onAutoForward": "notify"
+    },
+    "3344": {
+      "label": "Vite HMR",
+      "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "Docs (Docus)",
+      "onAutoForward": "silent"
+    }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-deps,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-docs-deps,target=${containerWorkspaceFolder}/docs/node_modules,type=volume"
+  ],
+  "initializeCommand": "docker volume create ${localWorkspaceFolderBasename}-deps >/dev/null 2>&1 || true; docker volume create ${localWorkspaceFolderBasename}-docs-deps >/dev/null 2>&1 || true; docker run --rm -v ${localWorkspaceFolderBasename}-deps:/v -v ${localWorkspaceFolderBasename}-docs-deps:/docs busybox sh -c 'mkdir -p /v/.pnpm-store && chown -R 1000:1000 /v /docs'",
+  "containerEnv": {
+    "SSH_AUTH_SOCK": "",
+    "ELECTRON_DISABLE_SANDBOX": "1",
+    "DISPLAY": ":1",
+    "PNPM_HOME": "/home/node/.local/share/pnpm",
+    "PNPM_STORE_PATH": "${containerWorkspaceFolder}/node_modules/.pnpm-store"
+  },
+  "capDrop": ["ALL"],
+  "securityOpt": ["no-new-privileges"],
+  "postCreateCommand": "corepack enable && pnpm config set store-dir ${containerWorkspaceFolder}/node_modules/.pnpm-store && pnpm install",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "remote.SSH.enableAgentForwarding": false,
+        "git.ignoreMissingGitWarning": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "Vue.volar",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  }
+}

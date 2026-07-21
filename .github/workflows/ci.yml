@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    # `edited` so fixing the AI disclosure in the PR body re-runs checks
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    name: Check Not Allowed File Changes
+    # Owner may change package.json / lockfiles / workspace config; block everyone else.
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login != 'iamursysadmin' &&
+      github.actor != 'iamursysadmin'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Not Allowed File Changes
+        uses: dorny/paths-filter@v4
+        id: filter_not_allowed
+        with:
+          list-files: json
+          filters: |
+            change:
+              - 'package.json'
+              - 'package-lock.json'
+              - 'yarn.lock'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+
+      # ref: https://github.com/github/docs/blob/main/.github/workflows/triage-unallowed-contributions.yml
+      - name: Comment About Changes We Can't Accept
+        if: ${{ steps.filter_not_allowed.outputs.change == 'true' }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            let workflowFailMessage = "It looks like you've modified some files that we can't accept as contributions."
+            try {
+              const badFilesArr = [
+                'package.json',
+                'package-lock.json',
+                'yarn.lock',
+                'pnpm-lock.yaml',
+                'pnpm-workspace.yaml',
+              ]
+              const badFiles = badFilesArr.join('\n- ')
+              const reviewMessage = `👋 Hey there. It looks like you've modified some files that we can't accept as contributions. The complete list of files we can't accept are:\n- ${badFiles}\n\nYou'll need to revert all of the files you changed in that list using [GitHub Desktop](https://docs.github.com/en/free-pro-team@latest/desktop/contributing-and-collaborating-using-github-desktop/managing-commits/reverting-a-commit) or \`git checkout origin/main <file name>\`. Once you get those files reverted, we can continue with the review process. :octocat:`
+              const createdComment = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.number,
+                body: reviewMessage,
+              })
+              workflowFailMessage = `${workflowFailMessage} Please see ${createdComment.data.html_url} for details.`
+            } catch (err) {
+              console.log("Error creating comment.", err)
+            }
+            core.setFailed(workflowFailMessage)
+
+  ai-disclosure-check:
+    name: Check AI Disclosure Section
+    # Owner's own PRs (rare, but possible for draft/testing branches) are exempt.
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login != 'iamursysadmin' &&
+      github.actor != 'iamursysadmin'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body for AI disclosure section
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const body = context.payload.pull_request.body || ''
+            const hasSection = /ai use disclosure/i.test(body)
+            if (!hasSection) {
+              const contributingUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/CONTRIBUTING.md`
+              const reviewMessage = `👋 Hey there. Your PR description doesn't include the **AI use disclosure** section from the template.\n\nWe're fine with AI-assisted contributions, but we ask everyone to fill out that section (even to say "no AI used") — see [CONTRIBUTING.md](${contributingUrl}) for why. Please edit your PR description to include it, then this check will re-run automatically.`
+              try {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.payload.number,
+                  body: reviewMessage,
+                })
+              } catch (err) {
+                console.log("Error creating comment.", err)
+              }
+              core.setFailed('PR description is missing the AI use disclosure section.')
+            }
+
+  check:
+    name: Typecheck, Lint & Test
+    needs: [guard, ai-disclosure-check]
+    if: |
+      always() &&
+      (needs.guard.result == 'success' || needs.guard.result == 'skipped') &&
+      (needs.ai-disclosure-check.result == 'success' || needs.ai-disclosure-check.result == 'skipped')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Test
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" pnpm run test
