@@ -80,7 +80,9 @@
     "vue-tsc": "3.3.7"
   },
   "dependencies": {
+    "@mediabunny/server": "1.50.8",
     "@nuxt/ui": "4.10.0",
+    "mediabunny": "1.50.8",
     "pathe": "2.0.3",
     "pinia": "4.0.2",
     "tonal": "6.4.3",
