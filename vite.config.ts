@@ -26,7 +26,9 @@ export default defineConfig(({ command }) => {
         '#stores': path.resolve(__dirname, 'src/stores'),
         '#stores/*': path.resolve(__dirname, 'src/stores/*'),
         '#constants': path.resolve(__dirname, 'shared/constants'),
-        '#constants/*': path.resolve(__dirname, 'shared/constants/*')
+        '#constants/*': path.resolve(__dirname, 'shared/constants/*'),
+        '#electron': path.resolve(__dirname, 'electron'),
+        '#electron/*': path.resolve(__dirname, 'electron/*')
       }
     },
     plugins: [
@@ -53,15 +55,20 @@ export default defineConfig(({ command }) => {
             }
           },
           vite: {
+            resolve: {
+              alias: {
+                '#electron': path.resolve(__dirname, 'electron'),
+                '#electron/*': path.resolve(__dirname, 'electron/*')
+              }
+            },
             build: {
               sourcemap,
               minify: isBuild,
               outDir: 'dist-electron/main',
-              rollupOptions: {
-                // Some third-party Node.js libraries may not be built correctly by Vite, especially `C/C++` addons,
-                // we can use `external` to exclude them to ensure they work correctly.
-                // Others need to put them in `dependencies` to ensure they are collected into `app.asar` after the app is built.
-                // Of course, this is not absolute, just this way is relatively simple. :)
+              // Vite 8+ reads `rolldownOptions` (vite-plugin-electron drops
+              // `rollupOptions` when both exist). Native addons like node-av
+              // must stay external or createRequire breaks at runtime.
+              rolldownOptions: {
                 external: Object.keys(
                   'dependencies' in pkg ? pkg.dependencies : {}
                 )
@@ -78,7 +85,7 @@ export default defineConfig(({ command }) => {
               sourcemap: sourcemap ? 'inline' : undefined, // #332
               minify: isBuild,
               outDir: 'dist-electron/preload',
-              rollupOptions: {
+              rolldownOptions: {
                 external: Object.keys(
                   'dependencies' in pkg ? pkg.dependencies : {}
                 )

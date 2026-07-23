@@ -6,13 +6,19 @@
   },
   "remoteUser": "node",
   "features": {
-    "ghcr.io/devcontainers/features/desktop-lite:1": {}
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "password": "noPassword"
+    }
   },
+  // Electron needs more than the default 64MB /dev/shm in Docker.
+  "runArgs": ["--shm-size=1g"],
   "forwardPorts": [6080, 3344, 3000],
   "portsAttributes": {
     "6080": {
       "label": "Desktop (noVNC)",
-      "onAutoForward": "notify"
+      // Prefer the system browser — Cursor/VS Code Simple Browser often shows a
+      // blank page because noVNC needs WebSockets.
+      "onAutoForward": "openBrowser"
     },
     "3344": {
       "label": "Vite HMR",
@@ -25,11 +31,12 @@
   },
   "mounts": [
     "source=${localWorkspaceFolderBasename}-deps,target=${containerWorkspaceFolder}/node_modules,type=volume",
-    "source=${localWorkspaceFolderBasename}-docs-deps,target=${containerWorkspaceFolder}/docs/node_modules,type=volume"
+    "source=${localWorkspaceFolderBasename}-docs-deps,target=${containerWorkspaceFolder}/docs/node_modules,type=volume",
+    // Public half of your host SSH signing key only — private key stays on the host.
+    "source=${localEnv:HOME}/.ssh/id_ed25519.pub,target=/home/node/.ssh/id_ed25519.pub,type=bind,readonly"
   ],
   "initializeCommand": "docker volume create ${localWorkspaceFolderBasename}-deps >/dev/null 2>&1 || true; docker volume create ${localWorkspaceFolderBasename}-docs-deps >/dev/null 2>&1 || true; docker run --rm -v ${localWorkspaceFolderBasename}-deps:/v -v ${localWorkspaceFolderBasename}-docs-deps:/docs busybox sh -c 'mkdir -p /v/.pnpm-store && chown -R 1000:1000 /v /docs'",
   "containerEnv": {
-    "SSH_AUTH_SOCK": "",
     "ELECTRON_DISABLE_SANDBOX": "1",
     "DISPLAY": ":1",
     "PNPM_HOME": "/home/node/.local/share/pnpm",
@@ -37,11 +44,11 @@
   },
   "capDrop": ["ALL"],
   "securityOpt": ["no-new-privileges"],
-  "postCreateCommand": "corepack enable && pnpm config set store-dir ${containerWorkspaceFolder}/node_modules/.pnpm-store && pnpm install",
+  "postCreateCommand": "corepack enable && pnpm config set store-dir ${containerWorkspaceFolder}/node_modules/.pnpm-store && pnpm install && mkdir -p /home/node/.fluxbox && printf '%s\\n' \"fbsetroot|-foreground #1e1e2e -solid #1e1e2e|style|:1.0\" > /home/node/.fluxbox/lastwallpaper",
+  "postStartCommand": "DISPLAY=${DISPLAY:-:1} fbsetroot -solid '#1e1e2e' >/dev/null 2>&1 || true; bash ${containerWorkspaceFolder}/.devcontainer/setup-git-signing.sh",
   "customizations": {
     "vscode": {
       "settings": {
-        "remote.SSH.enableAgentForwarding": false,
         "git.ignoreMissingGitWarning": true,
         "terminal.integrated.defaultProfile.linux": "bash"
       },

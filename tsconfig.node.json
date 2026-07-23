@@ -4,7 +4,11 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "#electron": ["./electron"],
+      "#electron/*": ["./electron/*"]
+    }
   },
   "include": [
     "vite.config.ts",

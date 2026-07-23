@@ -23,6 +23,7 @@ allowBuilds:
   electron: true
   electron-winstaller: true
   esbuild: true
+  node-av: true
   sharp: true
   unrs-resolver: true
   vue-demi: true
