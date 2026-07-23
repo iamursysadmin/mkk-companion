@@ -20,6 +20,9 @@ release
 *.sln
 *.sw?
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # lockfile
 package-lock.json
 

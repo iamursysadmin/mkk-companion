@@ -1,1 +1,4 @@
+#!/usr/bin/env sh
+# Cursor re-syncs host git signing paths into ~/.gitconfig; re-bind before commit.
+bash .devcontainer/setup-git-signing.sh
 pnpm exec lint-staged

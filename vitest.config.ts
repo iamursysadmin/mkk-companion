@@ -14,7 +14,8 @@ export default defineConfig({
       '#components': path.resolve(__dirname, 'src/components'),
       '#views': path.resolve(__dirname, 'src/views'),
       '#stores': path.resolve(__dirname, 'src/stores'),
-      '#constants': path.resolve(__dirname, 'shared/constants')
+      '#constants': path.resolve(__dirname, 'shared/constants'),
+      '#electron': path.resolve(__dirname, 'electron')
     }
   },
   test: {

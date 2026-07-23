@@ -23,7 +23,9 @@
       "#stores": ["./src/stores"],
       "#stores/*": ["./src/stores/*"],
       "#constants": ["./shared/constants"],
-      "#constants/*": ["./shared/constants/*"]
+      "#constants/*": ["./shared/constants/*"],
+      "#electron": ["./electron"],
+      "#electron/*": ["./electron/*"]
     }
   },
   "include": [

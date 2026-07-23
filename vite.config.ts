@@ -26,7 +26,9 @@ export default defineConfig(({ command }) => {
         '#stores': path.resolve(__dirname, 'src/stores'),
         '#stores/*': path.resolve(__dirname, 'src/stores/*'),
         '#constants': path.resolve(__dirname, 'shared/constants'),
-        '#constants/*': path.resolve(__dirname, 'shared/constants/*')
+        '#constants/*': path.resolve(__dirname, 'shared/constants/*'),
+        '#electron': path.resolve(__dirname, 'electron'),
+        '#electron/*': path.resolve(__dirname, 'electron/*')
       }
     },
     plugins: [
@@ -53,6 +55,12 @@ export default defineConfig(({ command }) => {
             }
           },
           vite: {
+            resolve: {
+              alias: {
+                '#electron': path.resolve(__dirname, 'electron'),
+                '#electron/*': path.resolve(__dirname, 'electron/*')
+              }
+            },
             build: {
               sourcemap,
               minify: isBuild,
